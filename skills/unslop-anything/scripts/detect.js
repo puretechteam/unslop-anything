@@ -960,11 +960,39 @@ const rules = [
       // In a CSS-in-JS value the scan stops at the closing quote, so
       // `pointerEvents: "all"` later in the same style object is not read
       // as part of `transition: "opacity .2s"`.
+      const first = matches(/\btransition-all\b|transition(?:-property)?:\s*["'`]?[^;{}"'`]*?(?<![\w-])all(?![\w-])/, code).next();
       // A layer with no property name animates `all` too, its initial value:
-      // `transition: 0.3s ease`, `transition: ease-in .2s`, or such a layer
-      // after a comma. Commas inside cubic-bezier(...) do not start a layer.
-      const first = matches(/\btransition-all\b|transition(?:-property)?:\s*["'`]?[^;{}"'`]*?(?<![\w-])all(?![\w-])|transition:\s*["'`]?(?:[^;{}"'`()]*?(?:\([^()]*\)[^;{}"'`()]*?)*,)?\s*(?:(?:ease(?:-in-out|-in|-out)?|linear|step-start|step-end|(?:cubic-bezier|steps|linear)\([^()]*\))\s+)?(?:\d*\.)?\d+m?s\b/, code).next();
-      return first.done ? [] : [first.value.index];
+      // `transition: 0.3s ease`, `transition: ease-in .2s`. A name may also come
+      // after the duration (`transition: .2s opacity`), so the whole layer is read.
+      const duration = /^(?:\d*\.)?\d+m?s$/;
+      const timing = /^(?:ease(?:-in-out|-in|-out)?|linear|step-start|step-end|allow-discrete|normal|(?:cubic-bezier|steps|linear)\(.*\))$/;
+      const layers = (value) => {
+        const out = [];
+        let depth = 0;
+        let start = 0;
+        for (let i = 0; i < value.length; i++) {
+          if (value[i] === "(") depth++;
+          else if (value[i] === ")") depth--;
+          else if (value[i] === "," && depth === 0) {
+            out.push(value.slice(start, i));
+            start = i + 1;
+          }
+        }
+        return [...out, value.slice(start)];
+      };
+      const noProperty = (layer) => {
+        const words = layer.replace(/!important/i, "").match(/[\w-]+\([^()]*\)|\S+/g) || [];
+        return words.some((w) => duration.test(w)) && words.every((w) => duration.test(w) || timing.test(w));
+      };
+      let bare;
+      for (const m of matches(/transition:\s*["'`]?([^;{}"'`]*)/, code)) {
+        if (layers(m[1]).some(noProperty)) {
+          bare = m.index;
+          break;
+        }
+      }
+      const at = [first.done ? undefined : first.value.index, bare].filter((i) => i !== undefined);
+      return at.length ? [Math.min(...at)] : [];
     },
   },
   {

@@ -409,6 +409,13 @@ test("transition-all flags a transition layer with no property (issue #144)", ()
   assert.deepStrictEqual(lines(".a { transition: transform 200ms, opacity 200ms; }\n"), []);
   assert.deepStrictEqual(lines(".a { transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s; }\n"), []);
   assert.deepStrictEqual(lines(".a { transition-duration: 0.3s; }\n"), []);
+  // A property may come after the duration: the whole layer is read.
+  assert.deepStrictEqual(lines(".a { transition: .2s opacity; }\n"), []);
+  assert.deepStrictEqual(lines(".a { transition: ease .2s opacity; }\n"), []);
+  assert.deepStrictEqual(lines(".a { transition: opacity .2s, .3s transform; }\n"), []);
+  assert.deepStrictEqual(lines(".a { transition: var(--speed) ease; }\n"), []);
+  assert.deepStrictEqual(lines(".a { transition: .3s ease !important; }\n"), [1]);
+  assert.deepStrictEqual(lines(".a {\n  transition:\n    opacity .2s,\n    .3s;\n}\n"), [2]);
   // The CSS-in-JS quote stop from #48 still holds.
   assert.deepStrictEqual(lines('const s = { transition: "opacity .2s", pointerEvents: "all" };\n', "a.tsx"), []);
   assert.deepStrictEqual(lines('const s = { transition: "opacity .2s", animationDuration: "0.3s" };\n', "a.tsx"), []);

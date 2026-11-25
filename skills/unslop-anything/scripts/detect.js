@@ -960,7 +960,10 @@ const rules = [
       // In a CSS-in-JS value the scan stops at the closing quote, so
       // `pointerEvents: "all"` later in the same style object is not read
       // as part of `transition: "opacity .2s"`.
-      const first = matches(/\btransition-all\b|transition(?:-property)?:\s*["'`]?[^;{}"'`]*?(?<![\w-])all(?![\w-])/, code).next();
+      // A layer with no property name animates `all` too, its initial value:
+      // `transition: 0.3s ease`, `transition: ease-in .2s`, or such a layer
+      // after a comma. Commas inside cubic-bezier(...) do not start a layer.
+      const first = matches(/\btransition-all\b|transition(?:-property)?:\s*["'`]?[^;{}"'`]*?(?<![\w-])all(?![\w-])|transition:\s*["'`]?(?:[^;{}"'`()]*?(?:\([^()]*\)[^;{}"'`()]*?)*,)?\s*(?:(?:ease(?:-in-out|-in|-out)?|linear|step-start|step-end|(?:cubic-bezier|steps|linear)\([^()]*\))\s+)?(?:\d*\.)?\d+m?s\b/, code).next();
       return first.done ? [] : [first.value.index];
     },
   },

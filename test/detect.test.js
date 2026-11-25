@@ -394,6 +394,26 @@ test("transition-all stops at the quote that ends a CSS-in-JS value", () => {
   assert.deepStrictEqual(scanSource(singleQuoted, "a.tsx").map((f) => f.rule), ["transition-all"]);
 });
 
+test("transition-all flags a transition layer with no property (issue #144)", () => {
+  const lines = (src, file = "card.css") => scanSource(src, file).filter((f) => f.rule === "transition-all").map((f) => f.line);
+  assert.deepStrictEqual(lines(".card {\n  transition: 0.3s ease;\n}\n"), [2]);
+  assert.deepStrictEqual(lines(".a { transition: .2s; }\n"), [1]);
+  assert.deepStrictEqual(lines(".a { transition: 200ms linear 50ms; }\n"), [1]);
+  assert.deepStrictEqual(lines(".a { transition: ease-in-out 0.3s; }\n"), [1]);
+  assert.deepStrictEqual(lines(".a { transition: cubic-bezier(0.4, 0, 0.2, 1) 150ms; }\n"), [1]);
+  assert.deepStrictEqual(lines(".a { transition: opacity .2s, .3s ease; }\n"), [1]);
+  assert.deepStrictEqual(lines('const s = { transition: "0.3s ease" };\n', "a.tsx"), [1]);
+  // A named property stays quiet, also with commas inside a timing function.
+  assert.deepStrictEqual(lines(".a { transition: opacity .2s ease; }\n"), []);
+  assert.deepStrictEqual(lines(".a { transition: none; }\n"), []);
+  assert.deepStrictEqual(lines(".a { transition: transform 200ms, opacity 200ms; }\n"), []);
+  assert.deepStrictEqual(lines(".a { transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s; }\n"), []);
+  assert.deepStrictEqual(lines(".a { transition-duration: 0.3s; }\n"), []);
+  // The CSS-in-JS quote stop from #48 still holds.
+  assert.deepStrictEqual(lines('const s = { transition: "opacity .2s", pointerEvents: "all" };\n', "a.tsx"), []);
+  assert.deepStrictEqual(lines('const s = { transition: "opacity .2s", animationDuration: "0.3s" };\n', "a.tsx"), []);
+});
+
 test("reduced-motion flags animations with no prefers-reduced-motion fallback (issue #72)", () => {
   // The issue's exact repro: a @keyframes animation with no fallback.
   const repro = ".badge { animation: bounce 1s infinite; }\n@keyframes bounce { 50% { transform: translateY(-4px); } }\n";

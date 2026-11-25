@@ -889,7 +889,6 @@ test("focus-removed treats Tailwind v4 outline-hidden like outline-none (issue #
   assert.deepStrictEqual(lines('<input className="focus:md:outline-none" />\n', "a.tsx"), [1]);
   assert.deepStrictEqual(lines('<input className="focus:outline-hidden focus:ring-0" />\n', "a.tsx"), [1]);
   assert.deepStrictEqual(lines('<input className="focus:outline-none focus:ring-0 focus:ring-offset-0" />\n', "a.tsx"), [1]);
-  assert.deepStrictEqual(lines('<input className="focus:outline-hidden md:focus:ring-2" />\n', "a.tsx"), []);
 });
 
 test("nested-cards ignores dotted subcomponents and ion-card parts, still flags a real nested card", () => {

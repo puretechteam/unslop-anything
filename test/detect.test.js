@@ -871,6 +871,17 @@ test("focus-removed flags a bare focus:outline-none, not one with a ring replace
   assert.deepStrictEqual(rulesFor('<input className="focus:outline-none focus-visible:ring-2" />\n'), []);
 });
 
+test("focus-removed treats Tailwind v4 outline-hidden like outline-none (issue #142)", () => {
+  const lines = (src, file) => scanSource(src, file).filter((f) => f.rule === "focus-removed").map((f) => f.line);
+  assert.deepStrictEqual(lines('<input class="rounded border px-3 focus:outline-hidden" />\n', "Input.html"), [1]);
+  assert.deepStrictEqual(lines('<input className="outline-hidden" />\n', "a.tsx"), [1]);
+  // A replacement focus style keeps it quiet; `focus:outline-hidden` is not one.
+  assert.deepStrictEqual(lines('<input className="focus:outline-hidden focus-visible:ring-2" />\n', "a.tsx"), []);
+  assert.deepStrictEqual(lines('<input class="focus:outline-hidden focus:ring-2" />\n', "Input.html"), []);
+  // Other outline utilities are not removals.
+  assert.deepStrictEqual(lines('<input className="outline-2 outline-offset-2" />\n', "a.tsx"), []);
+});
+
 test("nested-cards ignores dotted subcomponents and ion-card parts, still flags a real nested card", () => {
   const rulesFor = (src, file = "a.tsx") => scanSource(src, file).map((f) => f.rule);
   // Issue #65: dotted subcomponents of a single card are not nested cards.

@@ -1070,12 +1070,13 @@ const rules = [
     fix: "Keep a visible :focus-visible style in the palette: a 2px outline or ring with an offset.",
     find({ code, stack }) {
       const hits = [];
-      for (const m of matches(/["'`][^"'`\n]*\b(?:focus:)?outline-none\b[^"'`\n]*["'`]/, code)) {
+      // Tailwind v4 calls the old transparent `outline-none` `outline-hidden`.
+      for (const m of matches(/["'`][^"'`\n]*\b(?:focus:)?outline-(?:none|hidden)\b[^"'`\n]*["'`]/, code)) {
         // Focus styles often sit in another string of the same cn(...) call.
         const around = code.slice(Math.max(0, m.index - 400), m.index + m[0].length + 400);
-        // The matched token itself may be `focus:outline-none`; its `focus:`
+        // The matched token itself may be `focus:outline-none` (or -hidden); its `focus:`
         // must not count as the replacement focus style it is missing.
-        const withoutMatch = around.replace(/\bfocus:outline-none\b/g, "");
+        const withoutMatch = around.replace(/\bfocus:outline-(?:none|hidden)\b/g, "");
         if (/\b(?:focus|focus-visible|focus-within|group-focus-visible|peer-focus-visible):|data-\[(?:highlighted|selected|focus|focused)|aria-selected:|data-\[state=/.test(withoutMatch)) continue;
         hits.push(m.index);
       }

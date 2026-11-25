@@ -964,7 +964,7 @@ const rules = [
       // A layer with no property name animates `all` too, its initial value:
       // `transition: 0.3s ease`, `transition: ease-in .2s`. A name may also come
       // after the duration (`transition: .2s opacity`), so the whole layer is read.
-      const duration = /^(?:\d*\.)?\d+m?s$/;
+      const duration = /^-?(?:\d*\.)?\d+m?s$/;
       const timing = /^(?:ease(?:-in-out|-in|-out)?|linear|step-start|step-end|allow-discrete|normal|(?:cubic-bezier|steps|linear)\(.*\))$/;
       const layers = (value) => {
         const out = [];
@@ -985,7 +985,8 @@ const rules = [
         return words.some((w) => duration.test(w)) && words.every((w) => duration.test(w) || timing.test(w));
       };
       let bare;
-      for (const m of matches(/transition:\s*["'`]?([^;{}"'`]*)/, code)) {
+      // Not a custom property such as `--transition: .2s ease`, which only stores a value.
+      for (const m of matches(/(?<!\w)(?<!--[\w-]*)transition:\s*["'`]?([^;{}"'`]*)/, code)) {
         if (layers(m[1]).some(noProperty)) {
           bare = m.index;
           break;

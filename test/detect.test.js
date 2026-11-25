@@ -414,6 +414,11 @@ test("transition-all flags a transition layer with no property (issue #144)", ()
   assert.deepStrictEqual(lines(".a { transition: ease .2s opacity; }\n"), []);
   assert.deepStrictEqual(lines(".a { transition: opacity .2s, .3s transform; }\n"), []);
   assert.deepStrictEqual(lines(".a { transition: var(--speed) ease; }\n"), []);
+  // A negative delay is still a delay; a custom property is not a transition.
+  assert.deepStrictEqual(lines(".a { transition: .2s ease -50ms; }\n"), [1]);
+  assert.deepStrictEqual(lines(".a { transition: opacity .2s ease -50ms; }\n"), []);
+  assert.deepStrictEqual(lines(".a { --transition: .2s ease; transition: opacity var(--transition); }\n"), []);
+  assert.deepStrictEqual(lines(".a { -webkit-transition: .2s; }\n"), [1]);
   assert.deepStrictEqual(lines(".a { transition: .3s ease !important; }\n"), [1]);
   assert.deepStrictEqual(lines(".a {\n  transition:\n    opacity .2s,\n    .3s;\n}\n"), [2]);
   // The CSS-in-JS quote stop from #48 still holds.
